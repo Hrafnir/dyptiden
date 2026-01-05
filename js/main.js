@@ -1,34 +1,27 @@
-
-/* Version: #11 */
-/* === MAIN ENGINE: DYPTIDS-REISEN (FIXED MATH) === */
+/* Version: #12 */
+/* === MAIN ENGINE: DYPTIDS-REISEN (HYPER-REALISM) === */
 
 if (typeof MILESTONES === 'undefined') console.error("Data error!");
+if (typeof Planet === 'undefined') console.error("Planet renderer error!");
 
 // --- GLOBALE VARIABLER ---
-let scene, camera, renderer, globe, starSystem, volcanoGroup;
+let scene, camera, renderer, starSystem;
 let timeLineGroup;
 let markers = [];
 
 // Tidsstyring
 let isPlaying = false;
 let isPausedForEvent = false; 
-let currentYear = 4600.000000; // Bruker flyttall for presisjon
+let currentYear = 4600.000000; 
 let clock = new THREE.Clock();
 let currentEraTitle = "";
 
 // Hastighets-skala (Faktiske år per sekund)
 const speedLevels = [
-    1,          // 1 år/s (Tar 145 år å spille ferdig!)
-    100,        // 100 år/s
-    1000,       // 1 000 år/s
-    10000,      // 10 000 år/s
-    100000,     // 100 000 år/s
-    1000000,    // 1 mill år/s
-    10000000,   // 10 mill år/s
-    100000000   // 100 mill år/s (46 sekunder totalt)
+    1, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000
 ];
 let currentSpeedIdx = 3; 
-let speed = speedLevels[currentSpeedIdx]; // Enhet: År per sekund
+let speed = speedLevels[currentSpeedIdx];
 
 // UI Referanser
 const ui = {
@@ -49,7 +42,6 @@ function init() {
     injectPopupHTML();
     setupThreeJS();
     
-    // Sett start-tekst
     const startData = getMilestoneData(4600);
     updateInfoText(startData);
     
@@ -70,11 +62,9 @@ function setupUI() {
 function updateSpeedDisplay() {
     let val = speed;
     let label = " år";
-    
     if (val >= 1000000000) { val /= 1000000000; label = " mrd år"; }
     else if (val >= 1000000) { val /= 1000000; label = " mill år"; }
     else if (val >= 1000) { val /= 1000; label = " tusen år"; }
-    
     ui.speedValue.innerText = val + label;
 }
 
@@ -105,12 +95,16 @@ function setupThreeJS() {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
+    // Lys trengs ikke for shaderen (den er selvlysende/beregner lys selv), 
+    // men vi beholder det for tidslinjen.
     scene.add(new THREE.AmbientLight(0x222222));
     const sun = new THREE.DirectionalLight(0xffffff, 1.5);
     sun.position.set(5, 3, 5);
     scene.add(sun);
 
-    createGlobe();
+    // INITIALISER DEN NYE PLANETEN
+    Planet.init(scene);
+
     createTimeLine();
     createStars();
 
@@ -119,34 +113,6 @@ function setupThreeJS() {
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-}
-
-function createGlobe() {
-    const geo = new THREE.IcosahedronGeometry(2.5, 12); 
-    const mat = new THREE.MeshStandardMaterial({ color: 0xff3300, roughness: 0.7 });
-    globe = new THREE.Mesh(geo, mat);
-    globe.position.set(-5, 0, -2);
-    scene.add(globe);
-    createVolcanoes();
-}
-
-function createVolcanoes() {
-    volcanoGroup = new THREE.Group();
-    globe.add(volcanoGroup);
-    const vGeo = new THREE.ConeGeometry(0.1, 0.4, 6);
-    const vMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff5500 });
-
-    for(let i=0; i<40; i++) {
-        const v = new THREE.Mesh(vGeo, vMat);
-        const phi = Math.random() * Math.PI * 2;
-        const theta = Math.random() * Math.PI;
-        const r = 2.5;
-        v.position.x = r * Math.sin(theta) * Math.cos(phi);
-        v.position.y = r * Math.sin(theta) * Math.sin(phi);
-        v.position.z = r * Math.cos(theta);
-        v.lookAt(0,0,0); v.rotateX(-Math.PI / 2);
-        volcanoGroup.add(v);
-    }
 }
 
 function createTimeLine() {
@@ -201,48 +167,32 @@ function updateSimulation(dt) {
         return;
     }
 
-    // --- MATEMATIKK FIX ---
-    // speed er i "År per sekund". dt er i sekunder.
-    // yearsTraveled = speed * dt
-    // Vi må konvertere dette til "Millioner år" (Ma) fordi currentYear er i Ma.
-    // 1 Ma = 1,000,000 år.
-    
     const yearsTraveled = speed * dt;
     const maTraveled = yearsTraveled / 1000000;
     
     currentYear -= maTraveled;
     if (currentYear < 0) currentYear = 0;
 
-    // --- DISPLAY FORMATERING ---
-    // Hvis farten er lav, vis desimaler så brukeren ser at det skjer noe
-    if (speed < 10000) {
-        ui.year.innerText = currentYear.toFixed(6) + " Ma";
-    } else if (speed < 1000000) {
-        ui.year.innerText = currentYear.toFixed(3) + " Ma";
-    } else {
-        ui.year.innerText = Math.floor(currentYear) + " Ma";
-    }
+    // Display
+    if (speed < 10000) ui.year.innerText = currentYear.toFixed(6) + " Ma";
+    else if (speed < 1000000) ui.year.innerText = currentYear.toFixed(3) + " Ma";
+    else ui.year.innerText = Math.floor(currentYear) + " Ma";
     
-    // --- NEDTELLING FIX ---
-    // Totalt antall år igjen = currentYear (i Ma) * 1,000,000
     const totalYearsLeft = currentYear * 1000000;
     const secondsLeft = totalYearsLeft / speed;
     ui.countdown.innerText = formatTime(secondsLeft);
 
-    // --- HENDELSER ---
+    // Hendelser
     const data = getMilestoneData(currentYear);
     ui.nextEvent.innerText = "NÅ: " + data.title;
 
     if (currentEraTitle !== data.title) {
         currentEraTitle = data.title;
-        
         isPlaying = false;
         isPausedForEvent = true;
         ui.warpBtn.innerText = "HENDELSE...";
 
         updateInfoText(data);
-        updateGlobeColor(data.color, currentYear);
-
         triggerPopup(data.title, `images/${data.img}`, () => {
             if (isPausedForEvent) {
                 isPlaying = true;
@@ -252,7 +202,7 @@ function updateSimulation(dt) {
         });
     }
 
-    // Animasjon av tidslinje
+    // Tidslinje
     const zScale = 0.5;
     markers.forEach(m => {
         const z = (m.userData.year - currentYear) * -zScale;
@@ -260,19 +210,19 @@ function updateSimulation(dt) {
         m.visible = (z < 10 && z > -500); 
     });
 
-    updateVolcanoes(currentYear);
+    // --- OPPDATER PLANETEN ---
+    // Her kaller vi den nye shader-oppdateringen
+    Planet.update(currentYear, camera);
 }
 
 function triggerPopup(title, src, onComplete) {
     if (!ui.popup) return;
 
     ui.popup.classList.remove('active');
-    
     setTimeout(() => {
         ui.popupImg.src = src;
         ui.popupText.innerText = title;
         ui.popup.classList.add('active');
-
         setTimeout(() => {
             ui.popup.classList.remove('active');
             if (onComplete) onComplete();
@@ -285,29 +235,11 @@ function updateInfoText(data) {
     ui.infoDesc.innerText = data.desc;
 }
 
-function updateGlobeColor(hex, year) {
-    const isSnowball = (year <= 2400 && year >= 2100) || (year <= 720 && year >= 635);
-    globe.material.color.setHex(isSnowball ? 0xffffff : hex);
-    globe.material.emissive.setHex(isSnowball ? 0x555555 : 0x000000);
-}
-
-function updateVolcanoes(year) {
-    if (!volcanoGroup) return;
-    volcanoGroup.visible = (year > 2500);
-    if (volcanoGroup.visible) {
-        const pulse = 0.5 + Math.sin(Date.now() * 0.005) * 0.5;
-        volcanoGroup.children.forEach(v => v.material.emissiveIntensity = 0.5 + pulse);
-    }
-}
-
 function formatTime(s) {
     if (s === Infinity) return "--";
     if (s <= 0) return "ANKOMST";
-    
-    // Hvis det er ekstremt mange år (lav fart)
     const years = Math.floor(s / (86400 * 365));
     if (years > 0) return `> ${years} år`;
-
     const d = Math.floor(s/86400); s %= 86400;
     const h = Math.floor(s/3600); s %= 3600;
     const m = Math.floor(s/60);
@@ -324,7 +256,6 @@ function toggleWarp() {
         isPausedForEvent = false;
         ui.popup.classList.remove('active');
     }
-    
     isPlaying = !isPlaying;
     ui.warpBtn.innerText = isPlaying ? "PAUSE REISEN ||" : "FORTSETT REISEN ▶";
     ui.warpBtn.style.color = isPlaying ? "#fff" : "#00ff41";
@@ -337,15 +268,17 @@ function animate() {
     if (isPlaying) {
         updateSimulation(dt);
         
-        globe.rotation.y += 0.005;
+        // Stjerner
         const pos = starSystem.geometry.attributes.position.array;
         for(let i=2; i<pos.length; i+=3) {
-            // Visuell stjerne-fart (clampet så det ikke blir kaos)
             let visualSpeed = Math.min(Math.log(speed) * 8, 200); 
             pos[i] += visualSpeed * dt; 
             if (pos[i] > 50) pos[i] = -400;
         }
         starSystem.geometry.attributes.position.needsUpdate = true;
+    } else {
+        // Selv om vi er pauset, oppdater planeten (for rotasjonens skyld)
+        Planet.update(currentYear, camera);
     }
 
     renderer.render(scene, camera);
@@ -353,4 +286,4 @@ function animate() {
 
 window.onload = init;
 
-/* Version: #11 */
+/* Version: #12 */
