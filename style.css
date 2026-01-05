@@ -1,4 +1,4 @@
-/* Version: #3 */
+/* Version: #4 */
 /* === RESET & BASIS STIL === */
 * {
     box-sizing: border-box;
@@ -8,116 +8,125 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden; 
-    background-color: #050505;
+    background-color: #000;
     color: #00ff41; 
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Share Tech Mono', monospace; /* Ny font */
     height: 100vh;
     width: 100vw;
 }
 
-/* === LAYOUT === */
-#app-container {
-    display: flex;
-    height: 100%;
+/* === LAYOUT LAG === */
+
+/* Lag 1: 3D Bakgrunn (Hele skjermen) */
+#scene-container {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-}
-
-/* --- VENSTRE SIDE: 3D KLODE --- */
-#globe-container {
-    width: 33%; 
     height: 100%;
-    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-    position: relative;
-    border-right: 2px solid #00ff41;
-    overflow: hidden;
+    z-index: 1;
 }
 
-#globe-overlay {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    pointer-events: none; 
+/* Lag 2: HUD (Heads-Up Display) Overlay */
+#hud-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 10;
-}
-
-.retro-label {
-    background-color: #000;
-    padding: 5px;
-    border: 1px solid #00ff41;
-    font-size: 0.8em;
-    opacity: 0.8;
-}
-
-/* --- HØYRE SIDE: DASHBOARD UI --- */
-#ui-panel {
-    width: 67%;
-    height: 100%;
-    padding: 30px;
+    pointer-events: none; /* Lar klikk gå gjennom til 3D-verdenen der det er tomt */
     display: flex;
     flex-direction: column;
-    overflow-y: auto; 
-    background-image: linear-gradient(rgba(0, 20, 0, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 20, 0, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px; 
-    position: relative; /* For posisjonering av popup */
+    justify-content: space-between; /* Topp og bunn */
+    padding: 20px;
 }
 
-/* === TYPOGRAFI & HEADER === */
-h1 {
-    margin: 0;
-    font-size: 2.5em;
-    letter-spacing: 5px;
-    text-shadow: 0 0 10px #00ff41; 
+/* === HUD ELEMENTER === */
+
+/* Gjør at knapper og bokser kan klikkes selv om laget er "gjennomklikkbart" */
+.hud-box, .control-panel, #event-popup {
+    pointer-events: auto; 
 }
 
-.system-status {
-    font-size: 0.8em;
-    color: #008822;
-    margin-bottom: 30px;
-    border-bottom: 1px dashed #004411;
-    padding-bottom: 10px;
+/* --- TOPP BAR --- */
+#hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.hud-box {
+    background: rgba(0, 10, 0, 0.7);
+    border: 1px solid #00ff41;
+    padding: 15px;
+    box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+    backdrop-filter: blur(2px);
+    min-width: 200px;
+}
+
+.hud-box.center {
+    flex-grow: 1;
+    text-align: center;
+    border-color: #008822;
 }
 
 .label {
-    display: block;
     font-size: 0.8em;
+    color: #00aa22;
     margin-bottom: 5px;
-    color: #00cc33;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-.digital-value {
-    font-size: 2em;
+.big-digit {
+    font-size: 3em;
     font-weight: bold;
-    text-align: right;
-    text-shadow: 0 0 5px #00ff41;
+    text-shadow: 0 0 10px #00ff41;
 }
 
-.digital-value-small {
-    font-size: 1.2em;
-    font-weight: bold;
+.digital-text {
+    font-size: 1.5em;
     color: #fff;
     text-shadow: 0 0 5px #fff;
-    margin-top: 5px;
-    text-align: right;
 }
 
-/* === KONTROLLER === */
-.control-group {
-    background: rgba(0, 20, 0, 0.6);
-    border: 1px solid #00ff41;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+.info-text {
+    font-size: 1.2em;
+    color: #ccffcc;
 }
 
-.label-row {
+/* --- BUNN BAR --- */
+#hud-bottom {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
+    justify-content: center;
+    align-items: flex-end;
 }
 
-/* Slider Styling */
+.control-panel {
+    background: rgba(0, 0, 0, 0.8);
+    border-top: 2px solid #00ff41;
+    border-left: 2px solid #00ff41;
+    border-right: 2px solid #00ff41;
+    padding: 20px 40px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 50%;
+    min-width: 400px;
+}
+
+.slider-row {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Custom Slider */
 input[type=range] {
     -webkit-appearance: none;
     width: 100%;
@@ -131,209 +140,82 @@ input[type=range]:focus {
 
 input[type=range]::-webkit-slider-runnable-track {
     width: 100%;
-    height: 8px;
+    height: 6px;
     cursor: pointer;
     background: #004411;
     border: 1px solid #00ff41;
 }
 
 input[type=range]::-webkit-slider-thumb {
-    height: 24px;
-    width: 12px;
+    height: 20px;
+    width: 40px; /* Bredere thumb for sci-fi look */
     background: #00ff41;
     cursor: pointer;
     -webkit-appearance: none;
-    margin-top: -9px; 
+    margin-top: -8px;
+    border-radius: 2px;
     box-shadow: 0 0 10px #00ff41;
 }
 
-/* Knapper */
-.button-row {
-    margin-top: 15px;
-    text-align: right;
-}
-
+/* Start Knapp */
 .retro-btn {
-    background: transparent;
+    background: rgba(0, 255, 65, 0.1);
     color: #00ff41;
     border: 2px solid #00ff41;
-    padding: 10px 20px;
+    padding: 10px 30px;
     font-family: inherit;
     font-weight: bold;
-    font-size: 1em;
+    font-size: 1.2em;
     cursor: pointer;
-    transition: all 0.2s ease;
     text-transform: uppercase;
+    transition: all 0.2s;
+    width: 100%;
 }
 
 .retro-btn:hover {
     background: #00ff41;
     color: #000;
-    box-shadow: 0 0 15px #00ff41;
+    box-shadow: 0 0 20px #00ff41;
 }
 
-/* === GRAFER === */
-.charts-container {
-    display: flex;
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.chart-box {
-    flex: 1;
-    border: 1px solid #008822;
-    padding: 15px;
-    background: rgba(0, 10, 0, 0.5);
-}
-
-canvas {
-    width: 100%;
-    height: 80px; 
-    display: block;
-    border-bottom: 1px solid #004411;
-}
-
-/* === MILEPÆL PANEL === */
-#milestone-panel {
-    flex-grow: 1;
-    border: 2px dashed #00ff41;
-    padding: 20px;
-    background: rgba(0, 20, 0, 0.3);
-    display: flex;
-    flex-direction: column;
-}
-
-.panel-header {
-    border-bottom: 1px solid #00ff41;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-}
-
-#era-title {
-    font-size: 1.8em;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.content-grid {
-    display: flex;
-    gap: 20px;
-    flex: 1;
-}
-
-#image-container {
-    flex: 1.2; /* Økt breddeandel til bildet */
-    min-width: 0; 
-    display: flex;
-    flex-direction: column;
-}
-
-#placeholder-visual {
-    width: 100%;
-    /* Økt høyde for "Mye mer plass" i dashbordet */
-    height: 300px; 
-    border: 1px solid #00ff41;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #001100;
-    color: #008822;
-    text-align: center;
-    padding: 0; /* Fjernet padding for at bildet skal fylle helt */
-    overflow: hidden;
-}
-
-/* Bilde-styling i dashbordet */
-#placeholder-visual img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Fyller rammen */
-    /* VIKTIG: Fokus på venstre side (20%), kutter høyre side */
-    object-position: 20% center; 
-    border: none;
-    display: block;
-    filter: sepia(20%) contrast(1.1); /* Litt retro touch */
-}
-
-.text-content {
-    flex: 1; /* Tekst tar litt mindre plass nå */
-    font-size: 1.1em;
-    line-height: 1.6;
-}
-
-/* === POP-UP OVERLAY FOR STORE BILDER === */
+/* === POP-UP BILDER === */
+/* Dette er "Hendelsen" som popper opp */
 #event-popup {
-    position: fixed;
+    position: absolute; /* Relativt til HUD-layer */
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    width: 70vw; /* Dekker 70% av bredden */
-    height: auto;
+    transform: translate(-50%, -50%) scale(0.5);
+    width: 60vw;
     aspect-ratio: 16/9;
-    background: #000;
-    border: 4px solid #00ff41;
-    box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
-    z-index: 1000;
+    border: 4px solid #fff;
+    box-shadow: 0 0 100px rgba(255, 255, 255, 0.5);
+    z-index: 100;
     opacity: 0;
-    pointer-events: none; /* Kan ikke klikkes når skjult */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy effekt */
+    background: #000;
+}
+
+#event-popup.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 #event-popup img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center; /* I popup viser vi hele senter */
 }
 
-#event-popup.active {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-    pointer-events: auto;
-    animation: popupPulse 0.5s ease-out;
-}
-
-/* Popup tekst overlay */
-.popup-label {
+#popup-text {
     position: absolute;
     bottom: 0;
-    left: 0;
     width: 100%;
-    background: rgba(0, 20, 0, 0.9);
-    color: #00ff41;
-    padding: 15px;
-    font-size: 1.5em;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 10px;
+    font-size: 2em;
     text-align: center;
-    border-top: 1px solid #00ff41;
-    text-transform: uppercase;
-    font-weight: bold;
+    border-top: 1px solid #fff;
 }
-
-@keyframes popupPulse {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-    70% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
-    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}
-
-/* === SCROLLBAR STYLING (Webkit) === */
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: #001100;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #004411;
-    border: 1px solid #00ff41;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #00ff41;
-}
-/* Version: #3 */
+/* Version: #4 */
