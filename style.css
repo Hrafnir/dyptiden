@@ -1,4 +1,4 @@
-/* Version: #7 */
+/* Version: #8 */
 /* === RESET & BASIS === */
 * { box-sizing: border-box; }
 body {
@@ -33,17 +33,11 @@ body {
 .digital-text { font-size: 1.5em; color: #fff; text-shadow: 0 0 5px #fff; }
 .info-text { font-size: 1.2em; color: #ccffcc; }
 
-/* === GRAFER (NYTT) === */
-.graph-box {
-    display: flex; flex-direction: column; gap: 5px; width: 300px; padding: 10px;
-}
-.graph-row {
-    display: flex; justify-content: space-between; align-items: center;
-}
+/* === GRAFER === */
+.graph-box { display: flex; flex-direction: column; gap: 5px; width: 300px; padding: 10px; }
+.graph-row { display: flex; justify-content: space-between; align-items: center; }
 .label-small { font-size: 0.9em; color: #00ff41; width: 80px; }
-canvas {
-    border-bottom: 1px solid #004411; background: rgba(0,0,0,0.5);
-}
+canvas { border-bottom: 1px solid #004411; background: rgba(0,0,0,0.5); }
 
 /* === KONTROLLER === */
 .control-panel {
@@ -64,9 +58,7 @@ input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; background:
 .retro-btn:hover { background: #00ff41; color: #000; box-shadow: 0 0 15px #00ff41; }
 
 /* === SIDE DOCK === */
-#side-dock {
-    width: 300px; background: rgba(0, 20, 0, 0.8); border: 1px solid #00ff41; padding: 10px;
-}
+#side-dock { width: 300px; background: rgba(0, 20, 0, 0.8); border: 1px solid #00ff41; padding: 10px; }
 #side-image-container {
     width: 100%; aspect-ratio: 1/1; border: 1px solid #004411; position: relative;
     cursor: pointer; overflow: hidden; transition: border-color 0.3s;
@@ -89,7 +81,7 @@ input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; background:
 #info-title { margin: 0 0 10px 0; font-size: 2.5em; text-transform: uppercase; text-shadow: 0 0 10px #00ff41; }
 #info-desc { font-size: 1.2em; line-height: 1.5; color: #e0ffe0; margin: 0; }
 
-/* === FULLSKJERM MODAL === */
+/* === FULLSKJERM MODAL (Oppdatert) === */
 #fullscreen-modal {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.95); z-index: 1000;
@@ -97,14 +89,38 @@ input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; background:
     opacity: 0; pointer-events: none; transition: opacity 0.3s;
 }
 #fullscreen-modal.active { opacity: 1; pointer-events: auto; }
+
 .modal-content {
-    position: relative; width: 80vh; height: 80vh; border: 2px solid #00ff41;
+    position: relative; 
+    width: 80vh; height: 90vh; /* Litt høyere for å få plass til tekst */
+    border: 2px solid #00ff41;
     box-shadow: 0 0 50px rgba(0, 255, 65, 0.2);
+    display: flex; flex-direction: column;
+    background: #000;
 }
-#modal-image { width: 100%; height: 100%; object-fit: contain; }
+
+.modal-image-wrapper {
+    flex: 2; /* Bildet tar mest plass */
+    overflow: hidden;
+    border-bottom: 1px solid #00ff41;
+}
+
+#modal-image { width: 100%; height: 100%; object-fit: contain; background: #050505; }
+
+.modal-text-area {
+    flex: 1; /* Tekst tar bunnen */
+    padding: 20px;
+    background: rgba(0, 20, 0, 0.9);
+    overflow-y: auto;
+    text-align: center;
+}
+
+#modal-title { color: #00ff41; text-transform: uppercase; margin: 0 0 10px 0; font-size: 2em; }
+#modal-desc { color: #fff; font-size: 1.2em; line-height: 1.5; margin: 0; }
+
 #close-modal-btn {
     position: absolute; top: -40px; right: 0; background: transparent; color: #fff;
     border: 1px solid #fff; padding: 5px 15px; cursor: pointer; font-family: inherit; font-size: 1.2em;
 }
 #close-modal-btn:hover { background: #fff; color: #000; }
-/* Version: #7 */
+/* Version: #8 */
