@@ -1,5 +1,5 @@
-/* Version: #12 */
-/* === MAIN ENGINE: DYPTIDS-REISEN (HYPER-REALISM) === */
+/* Version: #13 */
+/* === MAIN ENGINE: DYPTIDS-REISEN (INTERACTIVE DOCK) === */
 
 if (typeof MILESTONES === 'undefined') console.error("Data error!");
 if (typeof Planet === 'undefined') console.error("Planet renderer error!");
@@ -11,15 +11,11 @@ let markers = [];
 
 // Tidsstyring
 let isPlaying = false;
-let isPausedForEvent = false; 
 let currentYear = 4600.000000; 
 let clock = new THREE.Clock();
 let currentEraTitle = "";
 
-// Hastighets-skala (Faktiske år per sekund)
-const speedLevels = [
-    1, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000
-];
+const speedLevels = [1, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000];
 let currentSpeedIdx = 3; 
 let speed = speedLevels[currentSpeedIdx];
 
@@ -33,17 +29,23 @@ const ui = {
     warpBtn: document.getElementById('warp-btn'),
     infoTitle: document.getElementById('info-title'),
     infoDesc: document.getElementById('info-desc'),
-    popup: null, popupImg: null, popupText: null
+    // Nye elementer
+    sideImage: document.getElementById('side-image'),
+    sideImageContainer: document.getElementById('side-image-container'),
+    modal: document.getElementById('fullscreen-modal'),
+    modalImage: document.getElementById('modal-image'),
+    closeModalBtn: document.getElementById('close-modal-btn')
 };
 
 // --- INIT ---
 function init() {
     setupUI();
-    injectPopupHTML();
     setupThreeJS();
     
+    // Last inn start-data
     const startData = getMilestoneData(4600);
     updateInfoText(startData);
+    updateSideImage(startData.img);
     
     animate();
 }
@@ -57,6 +59,31 @@ function setupUI() {
     
     updateSpeedDisplay();
     ui.warpBtn.addEventListener('click', toggleWarp);
+
+    // KLIKK PÅ SIDE-BILDE -> ÅPNE FULLSKJERM & PAUSE
+    ui.sideImageContainer.addEventListener('click', () => {
+        openModal();
+    });
+
+    // LUKK MODAL -> FORTSETT? (Valgfritt, bruker må trykke start selv for kontroll)
+    ui.closeModalBtn.addEventListener('click', () => {
+        closeModal();
+    });
+}
+
+function openModal() {
+    // 1. Pause spillet
+    if (isPlaying) {
+        toggleWarp(); // Setter isPlaying = false
+    }
+    
+    // 2. Vis bildet i stor størrelse
+    ui.modalImage.src = ui.sideImage.src;
+    ui.modal.classList.add('active');
+}
+
+function closeModal() {
+    ui.modal.classList.remove('active');
 }
 
 function updateSpeedDisplay() {
@@ -66,20 +93,6 @@ function updateSpeedDisplay() {
     else if (val >= 1000000) { val /= 1000000; label = " mill år"; }
     else if (val >= 1000) { val /= 1000; label = " tusen år"; }
     ui.speedValue.innerText = val + label;
-}
-
-function injectPopupHTML() {
-    if (!document.getElementById('event-popup')) {
-        document.body.insertAdjacentHTML('beforeend', `
-            <div id="event-popup">
-                <img id="popup-img" src="" alt="Event">
-                <div class="popup-label" id="popup-text">HENDELSE</div>
-            </div>
-        `);
-    }
-    ui.popup = document.getElementById('event-popup');
-    ui.popupImg = document.getElementById('popup-img');
-    ui.popupText = document.getElementById('popup-text');
 }
 
 // --- THREE.JS ---
@@ -95,16 +108,12 @@ function setupThreeJS() {
     renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(renderer.domElement);
 
-    // Lys trengs ikke for shaderen (den er selvlysende/beregner lys selv), 
-    // men vi beholder det for tidslinjen.
     scene.add(new THREE.AmbientLight(0x222222));
     const sun = new THREE.DirectionalLight(0xffffff, 1.5);
     sun.position.set(5, 3, 5);
     scene.add(sun);
 
-    // INITIALISER DEN NYE PLANETEN
     Planet.init(scene);
-
     createTimeLine();
     createStars();
 
@@ -156,21 +165,17 @@ function createStars() {
     scene.add(starSystem);
 }
 
-// --- SIMULERING & LOGIKK ---
-
+// --- SIMULERING ---
 function updateSimulation(dt) {
     if (currentYear <= 0) {
         isPlaying = false;
         ui.warpBtn.innerText = "FREMTIDEN ER NÅ";
         ui.year.innerText = "0 Ma";
-        ui.countdown.innerText = "ANKOMST";
         return;
     }
 
     const yearsTraveled = speed * dt;
-    const maTraveled = yearsTraveled / 1000000;
-    
-    currentYear -= maTraveled;
+    currentYear -= yearsTraveled / 1000000;
     if (currentYear < 0) currentYear = 0;
 
     // Display
@@ -188,18 +193,14 @@ function updateSimulation(dt) {
 
     if (currentEraTitle !== data.title) {
         currentEraTitle = data.title;
-        isPlaying = false;
-        isPausedForEvent = true;
-        ui.warpBtn.innerText = "HENDELSE...";
-
+        
+        // Oppdater tekst og bilde (men IKKE pause automatisk lenger)
         updateInfoText(data);
-        triggerPopup(data.title, `images/${data.img}`, () => {
-            if (isPausedForEvent) {
-                isPlaying = true;
-                isPausedForEvent = false;
-                ui.warpBtn.innerText = "PAUSE REISEN ||";
-            }
-        });
+        updateSideImage(data.img);
+        
+        // Vi setter en kort visuell markering på knappen eller status
+        ui.warpBtn.style.boxShadow = "0 0 30px #fff";
+        setTimeout(() => ui.warpBtn.style.boxShadow = "", 500);
     }
 
     // Tidslinje
@@ -210,29 +211,19 @@ function updateSimulation(dt) {
         m.visible = (z < 10 && z > -500); 
     });
 
-    // --- OPPDATER PLANETEN ---
-    // Her kaller vi den nye shader-oppdateringen
     Planet.update(currentYear, camera);
-}
-
-function triggerPopup(title, src, onComplete) {
-    if (!ui.popup) return;
-
-    ui.popup.classList.remove('active');
-    setTimeout(() => {
-        ui.popupImg.src = src;
-        ui.popupText.innerText = title;
-        ui.popup.classList.add('active');
-        setTimeout(() => {
-            ui.popup.classList.remove('active');
-            if (onComplete) onComplete();
-        }, 5000); 
-    }, 200);
 }
 
 function updateInfoText(data) {
     ui.infoTitle.innerText = data.title;
     ui.infoDesc.innerText = data.desc;
+}
+
+function updateSideImage(imgName) {
+    ui.sideImage.src = `images/${imgName}`;
+    // Liten fade-effekt
+    ui.sideImage.style.opacity = 0;
+    setTimeout(() => ui.sideImage.style.opacity = 1, 200);
 }
 
 function formatTime(s) {
@@ -252,10 +243,6 @@ function getMilestoneData(y) {
 }
 
 function toggleWarp() {
-    if (isPausedForEvent) {
-        isPausedForEvent = false;
-        ui.popup.classList.remove('active');
-    }
     isPlaying = !isPlaying;
     ui.warpBtn.innerText = isPlaying ? "PAUSE REISEN ||" : "FORTSETT REISEN ▶";
     ui.warpBtn.style.color = isPlaying ? "#fff" : "#00ff41";
@@ -267,8 +254,6 @@ function animate() {
 
     if (isPlaying) {
         updateSimulation(dt);
-        
-        // Stjerner
         const pos = starSystem.geometry.attributes.position.array;
         for(let i=2; i<pos.length; i+=3) {
             let visualSpeed = Math.min(Math.log(speed) * 8, 200); 
@@ -277,7 +262,6 @@ function animate() {
         }
         starSystem.geometry.attributes.position.needsUpdate = true;
     } else {
-        // Selv om vi er pauset, oppdater planeten (for rotasjonens skyld)
         Planet.update(currentYear, camera);
     }
 
@@ -286,4 +270,4 @@ function animate() {
 
 window.onload = init;
 
-/* Version: #12 */
+/* Version: #13 */
