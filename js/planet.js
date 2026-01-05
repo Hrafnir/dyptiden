@@ -1,5 +1,5 @@
-/* Version: #2 */
-/* === PLANET RENDERER (ENHANCED) === */
+/* Version: #3 */
+/* === PLANET RENDERER (NATURAL & ATMOSPHERE FIX) === */
 
 const Planet = {
     mesh: null,
@@ -44,7 +44,7 @@ const Planet = {
             varying vec3 vPosition;
             varying vec3 vViewPosition;
 
-            // --- NOISE ---
+            // --- IMPROVED NOISE ---
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -96,7 +96,8 @@ const Planet = {
                 float value = 0.0;
                 float amplitude = 0.5;
                 float frequency = 2.0;
-                for (int i = 0; i < 5; i++) {
+                // Økt til 6 iterasjoner for mer detaljerte kystlinjer
+                for (int i = 0; i < 6; i++) {
                     value += amplitude * snoise(p * frequency);
                     frequency *= 2.0;
                     amplitude *= 0.5;
@@ -106,18 +107,17 @@ const Planet = {
 
             void main() {
                 // KONTINENTAL DRIFT LOGIKK
-                // Vi forskyver støyen basert på årstallet for å simulere bevegelse
-                // Ved å bruke uYear i Z-aksen får vi en "morphing" effekt
                 float timeMorph = (4600.0 - uYear) * 0.002; 
-                vec3 noiseCoord = vPosition * 1.8 + vec3(0.0, 0.0, timeMorph);
+                // Økt frekvens (3.5) for å få FLERE kontinenter
+                vec3 noiseCoord = vPosition * 3.5 + vec3(0.0, 0.0, timeMorph);
                 
                 float height = fbm(noiseCoord);
                 
                 // FARGER
                 vec3 deepOcean = vec3(0.0, 0.02, 0.15);
                 vec3 shallowOcean = vec3(0.0, 0.2, 0.5);
-                vec3 barrenLand = vec3(0.35, 0.25, 0.15); // Brun
-                vec3 greenLand = vec3(0.05, 0.35, 0.05);  // Dyp grønn
+                vec3 barrenLand = vec3(0.35, 0.25, 0.15); 
+                vec3 greenLand = vec3(0.05, 0.35, 0.05);  
                 vec3 magma = vec3(1.0, 0.3, 0.0);
                 vec3 magmaCool = vec3(0.2, 0.0, 0.0);
                 
@@ -128,7 +128,6 @@ const Planet = {
                 if (uMagmaLevel > 0.0) {
                     float lavaNoise = snoise(vPosition * 3.0 + uTime * 0.2);
                     vec3 lavaBase = mix(magma, magmaCool, smoothstep(-0.3, 0.4, lavaNoise));
-                    // Glødende sprekker
                     float cracks = smoothstep(0.6, 0.7, snoise(vPosition * 8.0));
                     lavaBase += vec3(1.0, 0.8, 0.2) * cracks * 2.0;
                     finalColor = lavaBase;
@@ -137,12 +136,11 @@ const Planet = {
 
                 // 2. LAND / HAV
                 if (uMagmaLevel < 1.0) {
-                    // Skarpere skille mellom land og vann
-                    float landThreshold = 0.02;
-                    float landFactor = step(landThreshold, height); // Hard kant
+                    // Lavere terskel for land (-0.05) gir MER landareal
+                    float landThreshold = -0.05; 
+                    float landFactor = step(landThreshold, height); 
                     
                     vec3 landC;
-                    // Bland brun og grønn
                     float lifeNoise = fbm(vPosition * 5.0);
                     vec3 bioColor = mix(barrenLand, greenLand, uLifeLevel * (0.5 + 0.5 * lifeNoise));
                     landC = bioColor;
@@ -151,11 +149,11 @@ const Planet = {
                     
                     vec3 earthC = mix(oceanC, landC, landFactor);
                     
-                    specularity = mix(1.0, 0.0, landFactor); // Kun hav skinner
+                    specularity = mix(1.0, 0.0, landFactor); 
                     finalColor = mix(earthC, finalColor, uMagmaLevel);
                 }
 
-                // 3. IS (SNØBALL)
+                // 3. IS
                 if (uIceLevel > 0.0) {
                     float iceN = fbm(vPosition * 8.0);
                     vec3 iceC = mix(vec3(0.9, 0.95, 1.0), vec3(0.7), iceN * 0.5);
@@ -168,7 +166,6 @@ const Planet = {
                 vec3 normal = normalize(vNormal);
                 float diff = max(dot(normal, lightDir), 0.0);
                 
-                // Specular
                 vec3 viewDir = normalize(vViewPosition);
                 vec3 reflectDir = reflect(-lightDir, normal);
                 float spec = pow(max(dot(viewDir, reflectDir), 0.0), 20.0) * specularity;
@@ -176,7 +173,7 @@ const Planet = {
                 vec3 ambient = vec3(0.02);
                 vec3 lighting = ambient + (diff + spec);
                 
-                if (uMagmaLevel > 0.5) lighting = vec3(1.0); // Selvlysende lava
+                if (uMagmaLevel > 0.5) lighting = vec3(1.0); 
 
                 gl_FragColor = vec4(finalColor * lighting, 1.0);
             }
@@ -191,12 +188,12 @@ const Planet = {
         const geometry = new THREE.SphereGeometry(2.5, 128, 128);
         this.mesh = new THREE.Mesh(geometry, material);
         
-        // ATMOSFÆRE (Tynnere)
+        // ATMOSFÆRE (Tynnere og mer realistisk)
         const atmoGeo = new THREE.SphereGeometry(2.65, 64, 64);
         const atmoMat = new THREE.ShaderMaterial({
             uniforms: { 
-                c: { type: "f", value: 0.3 }, // Mindre intensitet
-                p: { type: "f", value: 6.0 }, // Høyere power = tynnere kant
+                c: { type: "f", value: 0.25 }, // Lavere intensitet
+                p: { type: "f", value: 15.0 }, // MYE høyere power = tynnere kant
                 glowColor: { type: "c", value: new THREE.Color(0x00aaff) },
                 viewVector: { type: "v3", value: new THREE.Vector3() }
             },
@@ -242,27 +239,24 @@ const Planet = {
         }
 
         // FASER
-        if (year > 4000) { // Hadeikum
+        if (year > 4000) { 
             this.uniforms.uMagmaLevel.value = 1.0;
             this.uniforms.uIceLevel.value = 0.0;
             this.uniforms.uLifeLevel.value = 0.0;
             this.atmosphere.material.uniforms.glowColor.value.setHex(0xff3300);
-        } else if (year > 3800) { // Overgang
+        } else if (year > 3800) { 
             let t = (year - 3800) / 200;
             this.uniforms.uMagmaLevel.value = t;
             this.atmosphere.material.uniforms.glowColor.value.setHex(0xffaa00);
-        } else { // Arkeikum -> Nå
+        } else { 
             this.uniforms.uMagmaLevel.value = 0.0;
             this.atmosphere.material.uniforms.glowColor.value.setHex(0x00aaff);
         }
 
-        // IS
         let isSnowball = (year <= 2400 && year >= 2100) || (year <= 720 && year >= 635);
         let targetIce = isSnowball ? 1.0 : 0.0;
-        // Glatt overgang
         this.uniforms.uIceLevel.value += (targetIce - this.uniforms.uIceLevel.value) * 0.05;
 
-        // LIV
         if (year < 450) {
             let t = (450 - year) / 100;
             this.uniforms.uLifeLevel.value = Math.min(1.0, t);
@@ -270,8 +264,7 @@ const Planet = {
             this.uniforms.uLifeLevel.value = 0.0;
         }
 
-        // ROTASJON (Raskere)
         this.mesh.rotation.y += 0.005;
     }
 };
-/* Version: #2 */
+/* Version: #3 */
