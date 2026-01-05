@@ -1,32 +1,27 @@
-/* Version: #1 */
-/* === PLANET RENDERER (SHADER BASED) === */
+/* Version: #2 */
+/* === PLANET RENDERER (ENHANCED) === */
 
 const Planet = {
     mesh: null,
     atmosphere: null,
-    clouds: null,
     uniforms: null,
 
     init: function(scene) {
-        // --- 1. JORDKLODEN (SHADER MATERIAL) ---
         
-        // Shader Uniforms (Variabler vi kan endre fra JS)
         this.uniforms = {
             uTime: { value: 0.0 },
             uYear: { value: 4600.0 },
             uSunDirection: { value: new THREE.Vector3(5, 3, 5).normalize() },
-            uIceLevel: { value: 0.0 },     // 0 = Ingen is, 1 = Snøball
-            uMagmaLevel: { value: 1.0 },   // 1 = Hadeikum, 0 = Nåtid
-            uLifeLevel: { value: 0.0 }     // 0 = Barren, 1 = Grønn
+            uIceLevel: { value: 0.0 },
+            uMagmaLevel: { value: 1.0 },
+            uLifeLevel: { value: 0.0 }
         };
 
-        // Vertex Shader (Form og Posisjon)
         const vertexShader = `
             varying vec2 vUv;
             varying vec3 vNormal;
             varying vec3 vPosition;
             varying vec3 vViewPosition;
-
             void main() {
                 vUv = uv;
                 vNormal = normalize(normalMatrix * normal);
@@ -36,7 +31,6 @@ const Planet = {
             }
         `;
 
-        // Fragment Shader (Farger og Detaljer)
         const fragmentShader = `
             uniform float uTime;
             uniform float uYear;
@@ -50,12 +44,11 @@ const Planet = {
             varying vec3 vPosition;
             varying vec3 vViewPosition;
 
-            // --- NOISE FUNCTIONS (Simplex Noise) ---
+            // --- NOISE ---
             vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
             vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
             vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-
             float snoise(vec3 v) { 
                 const vec2  C = vec2(1.0/6.0, 1.0/3.0) ;
                 const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
@@ -66,18 +59,18 @@ const Planet = {
                 vec3 i1 = min( g.xyz, l.zxy );
                 vec3 i2 = max( g.xyz, l.zxy );
                 vec3 x1 = x0 - i1 + C.xxx;
-                vec3 x2 = x0 - i2 + C.yyy; // 2.0*C.x = 1/3 = C.y
-                vec3 x3 = x0 - D.yyy;      // -1.0+3.0*C.x = -0.5 = -D.y
+                vec3 x2 = x0 - i2 + C.yyy;
+                vec3 x3 = x0 - D.yyy;
                 i = mod289(i); 
                 vec4 p = permute( permute( permute( 
                         i.z + vec4(0.0, i1.z, i2.z, 1.0 ))
                         + i.y + vec4(0.0, i1.y, i2.y, 1.0 )) 
                         + i.x + vec4(0.0, i1.x, i2.x, 1.0 ));
-                float n_ = 0.142857142857; // 1.0/7.0
+                float n_ = 0.142857142857;
                 vec3  ns = n_ * D.wyz - D.xzx;
-                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
+                vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
                 vec4 x_ = floor(j * ns.z);
-                vec4 y_ = floor(j - 7.0 * x_ );    // mod(j,N)
+                vec4 y_ = floor(j - 7.0 * x_ );
                 vec4 x = x_ *ns.x + ns.yyyy;
                 vec4 y = y_ *ns.x + ns.yyyy;
                 vec4 h = 1.0 - abs(x) - abs(y);
@@ -99,12 +92,11 @@ const Planet = {
                 return 42.0 * dot( m*m, vec4( dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3) ) );
             }
 
-            // --- FBM (Fractal Brownian Motion) for detaljer ---
             float fbm(vec3 p) {
                 float value = 0.0;
                 float amplitude = 0.5;
                 float frequency = 2.0;
-                for (int i = 0; i < 6; i++) {
+                for (int i = 0; i < 5; i++) {
                     value += amplitude * snoise(p * frequency);
                     frequency *= 2.0;
                     amplitude *= 0.5;
@@ -113,117 +105,98 @@ const Planet = {
             }
 
             void main() {
-                // Roter støyen basert på tid for å simulere kontinentaldrift
-                // Vi bruker uYear for å endre formen sakte, uTime for rotasjon
-                float driftSpeed = 0.0005 * (4600.0 - uYear); // Endrer seg over tid
-                vec3 noiseCoord = vPosition * 1.5 + vec3(driftSpeed, driftSpeed, 0.0);
+                // KONTINENTAL DRIFT LOGIKK
+                // Vi forskyver støyen basert på årstallet for å simulere bevegelse
+                // Ved å bruke uYear i Z-aksen får vi en "morphing" effekt
+                float timeMorph = (4600.0 - uYear) * 0.002; 
+                vec3 noiseCoord = vPosition * 1.8 + vec3(0.0, 0.0, timeMorph);
                 
-                // Generer høydekart (-1 til 1)
-                float height = fbm(noiseCoord); 
+                float height = fbm(noiseCoord);
                 
-                // Fargepaletter
-                vec3 oceanColorDeep = vec3(0.0, 0.05, 0.2);
-                vec3 oceanColorShallow = vec3(0.0, 0.3, 0.6);
-                vec3 landColorBarren = vec3(0.4, 0.3, 0.2); // Brun
-                vec3 landColorLife = vec3(0.1, 0.5, 0.1);   // Grønn
-                vec3 magmaColor = vec3(1.0, 0.2, 0.0);
-                vec3 magmaDark = vec3(0.1, 0.0, 0.0);
-                vec3 iceColor = vec3(0.9, 0.95, 1.0);
-
+                // FARGER
+                vec3 deepOcean = vec3(0.0, 0.02, 0.15);
+                vec3 shallowOcean = vec3(0.0, 0.2, 0.5);
+                vec3 barrenLand = vec3(0.35, 0.25, 0.15); // Brun
+                vec3 greenLand = vec3(0.05, 0.35, 0.05);  // Dyp grønn
+                vec3 magma = vec3(1.0, 0.3, 0.0);
+                vec3 magmaCool = vec3(0.2, 0.0, 0.0);
+                
                 vec3 finalColor = vec3(0.0);
                 float specularity = 0.0;
 
-                // --- 1. MAGMA FASE (Hadeikum) ---
+                // 1. MAGMA
                 if (uMagmaLevel > 0.0) {
-                    float lavaNoise = snoise(vPosition * 4.0 + uTime * 0.1);
-                    vec3 lava = mix(magmaColor, magmaDark, smoothstep(-0.2, 0.5, lavaNoise));
-                    // Legg til glødende sprekker
-                    float cracks = 1.0 - abs(snoise(vPosition * 10.0));
-                    lava += vec3(1.0, 0.8, 0.0) * smoothstep(0.95, 1.0, cracks) * 2.0;
-                    
-                    finalColor = lava;
-                    specularity = 0.1; // Litt gjenskinn i flytende stein
+                    float lavaNoise = snoise(vPosition * 3.0 + uTime * 0.2);
+                    vec3 lavaBase = mix(magma, magmaCool, smoothstep(-0.3, 0.4, lavaNoise));
+                    // Glødende sprekker
+                    float cracks = smoothstep(0.6, 0.7, snoise(vPosition * 8.0));
+                    lavaBase += vec3(1.0, 0.8, 0.2) * cracks * 2.0;
+                    finalColor = lavaBase;
+                    specularity = 0.2;
                 }
 
-                // --- 2. VANLIG JORD (Arkeikum -> Nåtid) ---
-                // Hvis magma avtar, bland inn vann og land
+                // 2. LAND / HAV
                 if (uMagmaLevel < 1.0) {
-                    // Definer land vs vann
-                    float landThreshold = 0.05; // Juster denne for havnivå
-                    bool isLand = height > landThreshold;
-
-                    vec3 earthColor;
+                    // Skarpere skille mellom land og vann
+                    float landThreshold = 0.02;
+                    float landFactor = step(landThreshold, height); // Hard kant
                     
-                    if (isLand) {
-                        // Landfarge: Bland brun og grønn basert på uLifeLevel
-                        float mountainFactor = smoothstep(landThreshold, 1.0, height);
-                        vec3 baseLand = mix(landColorBarren, vec3(0.3, 0.2, 0.1), mountainFactor); // Fjell er mørkere
-                        earthColor = mix(baseLand, landColorLife, uLifeLevel * (1.0 - mountainFactor)); // Liv i lavlandet
-                        specularity = 0.0;
-                    } else {
-                        // Havfarge: Dyp vs Grunt
-                        earthColor = mix(oceanColorDeep, oceanColorShallow, smoothstep(-1.0, landThreshold, height));
-                        specularity = 1.0;
-                    }
+                    vec3 landC;
+                    // Bland brun og grønn
+                    float lifeNoise = fbm(vPosition * 5.0);
+                    vec3 bioColor = mix(barrenLand, greenLand, uLifeLevel * (0.5 + 0.5 * lifeNoise));
+                    landC = bioColor;
 
-                    // Bland magma med jord basert på uMagmaLevel
-                    finalColor = mix(earthColor, finalColor, uMagmaLevel);
+                    vec3 oceanC = mix(deepOcean, shallowOcean, smoothstep(-1.0, landThreshold, height));
+                    
+                    vec3 earthC = mix(oceanC, landC, landFactor);
+                    
+                    specularity = mix(1.0, 0.0, landFactor); // Kun hav skinner
+                    finalColor = mix(earthC, finalColor, uMagmaLevel);
                 }
 
-                // --- 3. IS FASE (Snøballjord) ---
+                // 3. IS (SNØBALL)
                 if (uIceLevel > 0.0) {
-                    // Is dekker alt hvis uIceLevel er 1.0, eller polene hvis mindre
-                    // Her gjør vi det enkelt: uIceLevel blender alt mot hvitt
-                    float iceNoise = fbm(vPosition * 10.0);
-                    vec3 icySurface = mix(iceColor, vec3(0.7, 0.8, 0.9), iceNoise);
-                    finalColor = mix(finalColor, icySurface, uIceLevel);
-                    specularity = mix(specularity, 0.5, uIceLevel); // Is skinner litt
+                    float iceN = fbm(vPosition * 8.0);
+                    vec3 iceC = mix(vec3(0.9, 0.95, 1.0), vec3(0.7), iceN * 0.5);
+                    finalColor = mix(finalColor, iceC, uIceLevel);
+                    specularity = mix(specularity, 0.4, uIceLevel);
                 }
 
-                // --- LYSBEREGNING (Lambert + Specular) ---
+                // LYS
                 vec3 lightDir = normalize(uSunDirection);
                 vec3 normal = normalize(vNormal);
-                
-                // Diffuse (Sollys)
                 float diff = max(dot(normal, lightDir), 0.0);
                 
-                // Specular (Gjenskinn på hav)
+                // Specular
                 vec3 viewDir = normalize(vViewPosition);
                 vec3 reflectDir = reflect(-lightDir, normal);
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0) * specularity;
+                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 20.0) * specularity;
 
-                // Ambient (Bakgrunnslys)
-                vec3 ambient = vec3(0.05);
-
-                // Legg sammen
-                vec3 lighting = ambient + (diff + spec) * vec3(1.0);
+                vec3 ambient = vec3(0.02);
+                vec3 lighting = ambient + (diff + spec);
                 
-                // Emissive (Magma skal lyse i mørket)
-                if (uMagmaLevel > 0.5) {
-                    lighting = vec3(1.0); // Ignorer skygger for lava
-                }
+                if (uMagmaLevel > 0.5) lighting = vec3(1.0); // Selvlysende lava
 
                 gl_FragColor = vec4(finalColor * lighting, 1.0);
             }
         `;
 
-        // Lag materialet
         const material = new THREE.ShaderMaterial({
             uniforms: this.uniforms,
             vertexShader: vertexShader,
             fragmentShader: fragmentShader
         });
 
-        // Geometri: Mye høyere oppløsning for at støyen skal se bra ut
         const geometry = new THREE.SphereGeometry(2.5, 128, 128);
         this.mesh = new THREE.Mesh(geometry, material);
         
-        // --- 2. ATMOSFÆRE (GLØD) ---
+        // ATMOSFÆRE (Tynnere)
         const atmoGeo = new THREE.SphereGeometry(2.65, 64, 64);
         const atmoMat = new THREE.ShaderMaterial({
             uniforms: { 
-                c: { type: "f", value: 0.5 },
-                p: { type: "f", value: 4.0 },
+                c: { type: "f", value: 0.3 }, // Mindre intensitet
+                p: { type: "f", value: 6.0 }, // Høyere power = tynnere kant
                 glowColor: { type: "c", value: new THREE.Color(0x00aaff) },
                 viewVector: { type: "v3", value: new THREE.Vector3() }
             },
@@ -254,80 +227,51 @@ const Planet = {
         this.atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
         this.mesh.add(this.atmosphere);
 
-        // --- 3. SKYER ---
-        // En enkel transparent kule som roterer litt fortere
-        const cloudGeo = new THREE.SphereGeometry(2.55, 64, 64);
-        const cloudMat = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.2,
-            roughness: 1,
-            metalness: 0
-        });
-        // Note: For ekte skyer trengs en tekstur, men vi bruker støy i shaderen for bakken.
-        // For nå lar vi skyene være subtile eller dropper dem for å spare GPU hvis shaderen er tung.
-        // Vi dropper sky-mesh for nå og lar shaderen ta seg av detaljene.
-
         scene.add(this.mesh);
-        
-        // Posisjon (samme som før)
         this.mesh.position.set(-5, 0, -2);
     },
 
     update: function(year, camera) {
         if (!this.mesh) return;
 
-        // Oppdater Uniforms
         this.uniforms.uTime.value += 0.01;
         this.uniforms.uYear.value = year;
 
-        // Oppdater Atmosfære-vinkel
         if (this.atmosphere) {
             this.atmosphere.material.uniforms.viewVector.value = new THREE.Vector3().subVectors(camera.position, this.mesh.position);
         }
 
-        // --- STYR VERDENSTILSTAND BASERT PÅ ÅR ---
-        
-        // 1. Magma (Hadeikum: 4600 -> 4000)
-        if (year > 4000) {
+        // FASER
+        if (year > 4000) { // Hadeikum
             this.uniforms.uMagmaLevel.value = 1.0;
             this.uniforms.uIceLevel.value = 0.0;
             this.uniforms.uLifeLevel.value = 0.0;
-            this.atmosphere.material.uniforms.glowColor.value.setHex(0xff3300); // Rød atmosfære
-        } 
-        // Overgang Hadeikum -> Arkeikum
-        else if (year > 3800) {
-            let t = (year - 3800) / 200; // 0 til 1
+            this.atmosphere.material.uniforms.glowColor.value.setHex(0xff3300);
+        } else if (year > 3800) { // Overgang
+            let t = (year - 3800) / 200;
             this.uniforms.uMagmaLevel.value = t;
             this.atmosphere.material.uniforms.glowColor.value.setHex(0xffaa00);
-        }
-        else {
+        } else { // Arkeikum -> Nå
             this.uniforms.uMagmaLevel.value = 0.0;
-            this.atmosphere.material.uniforms.glowColor.value.setHex(0x00aaff); // Blå atmosfære
+            this.atmosphere.material.uniforms.glowColor.value.setHex(0x00aaff);
         }
 
-        // 2. Snøballjord (Huronian: 2400-2100, Cryogenian: 720-635)
+        // IS
         let isSnowball = (year <= 2400 && year >= 2100) || (year <= 720 && year >= 635);
-        if (isSnowball) {
-            // Fade inn is
-            this.uniforms.uIceLevel.value += 0.05; 
-        } else {
-            // Fade ut is
-            this.uniforms.uIceLevel.value -= 0.05;
-        }
-        // Clamp (Hold mellom 0 og 1)
-        this.uniforms.uIceLevel.value = Math.max(0, Math.min(1, this.uniforms.uIceLevel.value));
+        let targetIce = isSnowball ? 1.0 : 0.0;
+        // Glatt overgang
+        this.uniforms.uIceLevel.value += (targetIce - this.uniforms.uIceLevel.value) * 0.05;
 
-        // 3. Liv (Vegetasjon) - Starter rundt 450 Ma (Silur/Devon)
+        // LIV
         if (year < 450) {
-            let t = (450 - year) / 100; // Øker etterhvert som vi nærmer oss 0
+            let t = (450 - year) / 100;
             this.uniforms.uLifeLevel.value = Math.min(1.0, t);
         } else {
             this.uniforms.uLifeLevel.value = 0.0;
         }
 
-        // Roter planeten
-        this.mesh.rotation.y += 0.002;
+        // ROTASJON (Raskere)
+        this.mesh.rotation.y += 0.005;
     }
 };
-/* Version: #1 */
+/* Version: #2 */
