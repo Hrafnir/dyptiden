@@ -1,4 +1,4 @@
-/* Version: #2 */
+/* Version: #3 */
 /* === RESET & BASIS STIL === */
 * {
     box-sizing: border-box;
@@ -7,9 +7,9 @@
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Hindrer scroll på selve vinduet, vi scroller i panelet */
+    overflow: hidden; 
     background-color: #050505;
-    color: #00ff41; /* Retro terminal grønn */
+    color: #00ff41; 
     font-family: 'Courier New', Courier, monospace;
     height: 100vh;
     width: 100vw;
@@ -24,7 +24,7 @@ body {
 
 /* --- VENSTRE SIDE: 3D KLODE --- */
 #globe-container {
-    width: 33%; /* Spesifisert i prompt: 33% */
+    width: 33%; 
     height: 100%;
     background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
     position: relative;
@@ -36,7 +36,7 @@ body {
     position: absolute;
     top: 20px;
     left: 20px;
-    pointer-events: none; /* Lar musklikk gå gjennom til 3D-modellen */
+    pointer-events: none; 
     z-index: 10;
 }
 
@@ -55,10 +55,11 @@ body {
     padding: 30px;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Tillater scrolling hvis innholdet er for høyt */
+    overflow-y: auto; 
     background-image: linear-gradient(rgba(0, 20, 0, 0.1) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 20, 0, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px; /* Grid-effekt i bakgrunnen */
+    background-size: 20px 20px; 
+    position: relative; /* For posisjonering av popup */
 }
 
 /* === TYPOGRAFI & HEADER === */
@@ -66,7 +67,7 @@ h1 {
     margin: 0;
     font-size: 2.5em;
     letter-spacing: 5px;
-    text-shadow: 0 0 10px #00ff41; /* CRT Glød-effekt */
+    text-shadow: 0 0 10px #00ff41; 
 }
 
 .system-status {
@@ -142,7 +143,7 @@ input[type=range]::-webkit-slider-thumb {
     background: #00ff41;
     cursor: pointer;
     -webkit-appearance: none;
-    margin-top: -9px; /* Juster for å sentrere på track */
+    margin-top: -9px; 
     box-shadow: 0 0 10px #00ff41;
 }
 
@@ -187,7 +188,7 @@ input[type=range]::-webkit-slider-thumb {
 
 canvas {
     width: 100%;
-    height: 80px; /* Fast høyde for canvas visuelt */
+    height: 80px; 
     display: block;
     border-bottom: 1px solid #004411;
 }
@@ -221,15 +222,16 @@ canvas {
 }
 
 #image-container {
-    flex: 1;
-    min-width: 0; /* Hindrer overflow i flex items */
+    flex: 1.2; /* Økt breddeandel til bildet */
+    min-width: 0; 
     display: flex;
     flex-direction: column;
 }
 
 #placeholder-visual {
     width: 100%;
-    height: 200px; /* Fast høyde for bildeområdet */
+    /* Økt høyde for "Mye mer plass" i dashbordet */
+    height: 300px; 
     border: 1px solid #00ff41;
     display: flex;
     align-items: center;
@@ -237,23 +239,84 @@ canvas {
     background: #001100;
     color: #008822;
     text-align: center;
-    padding: 10px;
-    font-size: 0.8em;
+    padding: 0; /* Fjernet padding for at bildet skal fylle helt */
+    overflow: hidden;
 }
 
-/* Hvis vi setter inn et faktisk bilde senere */
-#milestone-image {
+/* Bilde-styling i dashbordet */
+#placeholder-visual img {
     width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border: 1px solid #00ff41;
-    filter: sepia(100%) hue-rotate(50deg) saturate(300%) contrast(1.2); /* Retro grønn-filter på bilder */
+    height: 100%;
+    object-fit: cover; /* Fyller rammen */
+    /* VIKTIG: Fokus på venstre side (20%), kutter høyre side */
+    object-position: 20% center; 
+    border: none;
+    display: block;
+    filter: sepia(20%) contrast(1.1); /* Litt retro touch */
 }
 
 .text-content {
-    flex: 1.5;
+    flex: 1; /* Tekst tar litt mindre plass nå */
     font-size: 1.1em;
     line-height: 1.6;
+}
+
+/* === POP-UP OVERLAY FOR STORE BILDER === */
+#event-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 70vw; /* Dekker 70% av bredden */
+    height: auto;
+    aspect-ratio: 16/9;
+    background: #000;
+    border: 4px solid #00ff41;
+    box-shadow: 0 0 50px rgba(0, 255, 65, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none; /* Kan ikke klikkes når skjult */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#event-popup img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center; /* I popup viser vi hele senter */
+}
+
+#event-popup.active {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+    animation: popupPulse 0.5s ease-out;
+}
+
+/* Popup tekst overlay */
+.popup-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 20, 0, 0.9);
+    color: #00ff41;
+    padding: 15px;
+    font-size: 1.5em;
+    text-align: center;
+    border-top: 1px solid #00ff41;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+@keyframes popupPulse {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+    70% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 /* === SCROLLBAR STYLING (Webkit) === */
@@ -273,4 +336,4 @@ canvas {
 ::-webkit-scrollbar-thumb:hover {
     background: #00ff41;
 }
-/* Version: #2 */
+/* Version: #3 */
