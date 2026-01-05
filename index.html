@@ -1,10 +1,10 @@
-<!-- Version: #5 -->
+<!-- Version: #6 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dyptids-Reisen: Interactive</title>
+    <title>Dyptids-Reisen: Ultimate</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -34,6 +34,18 @@
                     <div id="countdown-display" class="digital-text">-- d -- t</div>
                 </div>
 
+                <!-- NYTT: Atmosfære Monitorer -->
+                <div class="hud-box graph-box">
+                    <div class="graph-row">
+                        <div class="label-small">O2: <span id="o2-val">0%</span></div>
+                        <canvas id="o2-canvas" width="150" height="30"></canvas>
+                    </div>
+                    <div class="graph-row">
+                        <div class="label-small">CO2: <span id="co2-val">Høy</span></div>
+                        <canvas id="co2-canvas" width="150" height="30"></canvas>
+                    </div>
+                </div>
+
                 <div class="control-panel">
                     <div class="slider-row">
                         <label>HASTIGHET: <span id="speed-value">100 år</span> /sek</label>
@@ -42,7 +54,6 @@
                     <button id="warp-btn" class="retro-btn">START REISEN ▶</button>
                 </div>
 
-                <!-- NYTT: Bilde-dock til høyre -->
                 <div id="side-dock">
                     <div class="label">VISUELL DATA</div>
                     <div id="side-image-container">
@@ -63,7 +74,7 @@
 
     </div>
 
-    <!-- NYTT: Fullskjerm Modal (Skjult som standard) -->
+    <!-- Fullskjerm Modal -->
     <div id="fullscreen-modal" class="hidden">
         <div class="modal-content">
             <img id="modal-image" src="" alt="Fullskjerm">
@@ -76,4 +87,4 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-<!-- Version: #5 -->
+<!-- Version: #6 -->
