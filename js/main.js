@@ -1,5 +1,5 @@
-/* Version: #14 */
-/* === MAIN ENGINE: DYPTIDS-REISEN (MONITOR) === */
+/* Version: #15 */
+/* === MAIN ENGINE: DYPTIDS-REISEN (TEXT MODAL FIX) === */
 
 if (typeof MILESTONES === 'undefined') console.error("Data error!");
 if (typeof Planet === 'undefined') console.error("Planet renderer error!");
@@ -29,8 +29,11 @@ const ui = {
     infoDesc: document.getElementById('info-desc'),
     sideImage: document.getElementById('side-image'),
     sideImageContainer: document.getElementById('side-image-container'),
+    // Modal
     modal: document.getElementById('fullscreen-modal'),
     modalImage: document.getElementById('modal-image'),
+    modalTitle: document.getElementById('modal-title'), // NY
+    modalDesc: document.getElementById('modal-desc'),   // NY
     closeModalBtn: document.getElementById('close-modal-btn'),
     // Monitorer
     o2Canvas: document.getElementById('o2-canvas'),
@@ -64,7 +67,12 @@ function setupUI() {
 
 function openModal() {
     if (isPlaying) toggleWarp();
+    // Kopier bilde
     ui.modalImage.src = ui.sideImage.src;
+    // Kopier tekst fra hoved-HUDen (som alltid viser gjeldende epoke)
+    ui.modalTitle.innerText = ui.infoTitle.innerText;
+    ui.modalDesc.innerText = ui.infoDesc.innerText;
+    
     ui.modal.classList.add('active');
 }
 function closeModal() { ui.modal.classList.remove('active'); }
@@ -146,28 +154,16 @@ function createStars() {
     scene.add(starSystem);
 }
 
-// --- ATMOSFÆRE DATA (Graph Logic) ---
+// --- ATMOSFÆRE DATA ---
 function calculateAtmosphere(year) {
-    let o2 = 0;
-    let co2 = 0;
+    let o2 = 0; let co2 = 0;
+    if (year > 2450) o2 = 0.0; 
+    else if (year > 850) o2 = 1.0 + (Math.sin(year * 0.1) * 0.5); 
+    else if (year > 400) { let p = (850 - year) / (850 - 400); o2 = 2 + (p * 18); } 
+    else { o2 = 21 + Math.sin(year * 0.05) * 5; }
 
-    // O2 Logikk
-    if (year > 2450) o2 = 0.0; // Før GOE
-    else if (year > 850) o2 = 1.0 + (Math.sin(year * 0.1) * 0.5); // Boring Billion
-    else if (year > 400) {
-        let p = (850 - year) / (850 - 400);
-        o2 = 2 + (p * 18); // Stiger mot 20%
-    } else {
-        o2 = 21 + Math.sin(year * 0.05) * 5; // Nåtid
-    }
-
-    // CO2 Logikk
     if (year > 4000) co2 = 90;
-    else {
-        let p = (4000 - year) / 4000;
-        co2 = 90 * Math.pow(0.01, p * 4); // Raskt fall
-        if (year % 200 < 50) co2 += 0.5; // Vulkanske utbrudd
-    }
+    else { let p = (4000 - year) / 4000; co2 = 90 * Math.pow(0.01, p * 4); if (year % 200 < 50) co2 += 0.5; }
 
     if(o2<0) o2=0; if(co2<0.04) co2=0.04;
     return { o2, co2 };
@@ -176,22 +172,14 @@ function calculateAtmosphere(year) {
 function drawMiniGraph(canvas, type, currentYear) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width; const h = canvas.height;
-    
-    // Fade effekt
-    ctx.fillStyle = 'rgba(0, 20, 0, 0.2)';
-    ctx.fillRect(0, 0, w, h);
-    
+    ctx.fillStyle = 'rgba(0, 20, 0, 0.2)'; ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = '#00ff41'; ctx.lineWidth = 2; ctx.beginPath();
-
-    // Tegn en liten historikk (siste 500 mill år fra currentYear)
     for (let i = 0; i < w; i+=5) {
         let plotYear = currentYear + (i/w)*500; 
         if (plotYear > 4600) plotYear = 4600;
-        
         const vals = calculateAtmosphere(plotYear);
         let val = (type === 'o2') ? vals.o2 : vals.co2;
         let max = (type === 'o2') ? 35 : 100;
-        
         let y = h - (val / max * h);
         if (i===0) ctx.moveTo(w-i, y); else ctx.lineTo(w-i, y);
     }
@@ -211,7 +199,6 @@ function updateSimulation(dt) {
     currentYear -= yearsTraveled / 1000000;
     if (currentYear < 0) currentYear = 0;
 
-    // Display
     if (speed < 10000) ui.year.innerText = currentYear.toFixed(6) + " Ma";
     else if (speed < 1000000) ui.year.innerText = currentYear.toFixed(3) + " Ma";
     else ui.year.innerText = Math.floor(currentYear) + " Ma";
@@ -220,14 +207,12 @@ function updateSimulation(dt) {
     const secondsLeft = totalYearsLeft / speed;
     ui.countdown.innerText = formatTime(secondsLeft);
 
-    // Grafer
     const atmo = calculateAtmosphere(currentYear);
     ui.o2Val.innerText = atmo.o2.toFixed(1) + "%";
     ui.co2Val.innerText = atmo.co2.toFixed(1) + "%";
     drawMiniGraph(ui.o2Canvas, 'o2', currentYear);
     drawMiniGraph(ui.co2Canvas, 'co2', currentYear);
 
-    // Hendelser
     const data = getMilestoneData(currentYear);
     ui.nextEvent.innerText = "NÅ: " + data.title;
 
@@ -240,7 +225,6 @@ function updateSimulation(dt) {
         setTimeout(() => ui.warpBtn.style.boxShadow = "", 500);
     }
 
-    // Tidslinje
     const zScale = 0.5;
     markers.forEach(m => {
         const z = (m.userData.year - currentYear) * -zScale;
@@ -306,4 +290,4 @@ function animate() {
 
 window.onload = init;
 
-/* Version: #14 */
+/* Version: #15 */
