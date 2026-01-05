@@ -1,4 +1,4 @@
-<!-- Version: #6 -->
+<!-- Version: #7 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
@@ -34,7 +34,6 @@
                     <div id="countdown-display" class="digital-text">-- d -- t</div>
                 </div>
 
-                <!-- NYTT: Atmosfære Monitorer -->
                 <div class="hud-box graph-box">
                     <div class="graph-row">
                         <div class="label-small">O2: <span id="o2-val">0%</span></div>
@@ -64,7 +63,7 @@
             </div>
         </div>
 
-        <!-- BUNN INFO -->
+        <!-- BUNN INFO (Synlig under reisen) -->
         <div id="hud-bottom-bar">
             <div id="info-overlay">
                 <h1 id="info-title">HADEIKUM</h1>
@@ -74,10 +73,16 @@
 
     </div>
 
-    <!-- Fullskjerm Modal -->
+    <!-- Fullskjerm Modal (Oppdatert med tekst) -->
     <div id="fullscreen-modal" class="hidden">
         <div class="modal-content">
-            <img id="modal-image" src="" alt="Fullskjerm">
+            <div class="modal-image-wrapper">
+                <img id="modal-image" src="" alt="Fullskjerm">
+            </div>
+            <div class="modal-text-area">
+                <h2 id="modal-title">TITTEL</h2>
+                <p id="modal-desc">Beskrivelse</p>
+            </div>
             <button id="close-modal-btn">LUKK X</button>
         </div>
     </div>
@@ -87,4 +92,4 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-<!-- Version: #6 -->
+<!-- Version: #7 -->
