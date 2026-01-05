@@ -1,5 +1,6 @@
-/* Version: #10 */
-/* === MAIN ENGINE: DYPTIDS-REISEN (WARP 2.0) === */
+
+/* Version: #11 */
+/* === MAIN ENGINE: DYPTIDS-REISEN (FIXED MATH) === */
 
 if (typeof MILESTONES === 'undefined') console.error("Data error!");
 
@@ -10,25 +11,24 @@ let markers = [];
 
 // Tidsstyring
 let isPlaying = false;
-let isPausedForEvent = false; // Ny flagg for hendelse-pause
-let currentYear = 4600;
+let isPausedForEvent = false; 
+let currentYear = 4600.000000; // Bruker flyttall for presisjon
 let clock = new THREE.Clock();
 let currentEraTitle = "";
 
-// Hastighets-skala (Logaritmisk)
-// Index 0-7 fra slideren mappes til disse verdiene:
+// Hastighets-skala (Faktiske år per sekund)
 const speedLevels = [
-    1,          // 1 år/s
+    1,          // 1 år/s (Tar 145 år å spille ferdig!)
     100,        // 100 år/s
     1000,       // 1 000 år/s
     10000,      // 10 000 år/s
     100000,     // 100 000 år/s
     1000000,    // 1 mill år/s
     10000000,   // 10 mill år/s
-    100000000   // 100 mill år/s (Warp speed!)
+    100000000   // 100 mill år/s (46 sekunder totalt)
 ];
-let currentSpeedIdx = 3; // Start på 10 000
-let speed = speedLevels[currentSpeedIdx];
+let currentSpeedIdx = 3; 
+let speed = speedLevels[currentSpeedIdx]; // Enhet: År per sekund
 
 // UI Referanser
 const ui = {
@@ -57,16 +57,13 @@ function init() {
 }
 
 function setupUI() {
-    // Slider Logic
     ui.speedSlider.addEventListener('input', (e) => {
         currentSpeedIdx = parseInt(e.target.value);
         speed = speedLevels[currentSpeedIdx];
         updateSpeedDisplay();
     });
     
-    // Initialvisning av fart
     updateSpeedDisplay();
-
     ui.warpBtn.addEventListener('click', toggleWarp);
 }
 
@@ -74,13 +71,9 @@ function updateSpeedDisplay() {
     let val = speed;
     let label = " år";
     
-    if (val >= 1000000) {
-        val = val / 1000000;
-        label = " mill år";
-    } else if (val >= 1000) {
-        val = val / 1000;
-        label = " tusen år";
-    }
+    if (val >= 1000000000) { val /= 1000000000; label = " mrd år"; }
+    else if (val >= 1000000) { val /= 1000000; label = " mill år"; }
+    else if (val >= 1000) { val /= 1000; label = " tusen år"; }
     
     ui.speedValue.innerText = val + label;
 }
@@ -99,14 +92,13 @@ function injectPopupHTML() {
     ui.popupText = document.getElementById('popup-text');
 }
 
-// --- THREE.JS (Uendret logikk, men ryddig) ---
+// --- THREE.JS ---
 function setupThreeJS() {
     const container = document.getElementById('scene-container');
     scene = new THREE.Scene();
     
-    // Justert kamera for bedre oversikt
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 3000);
-    camera.position.set(0, 0, 12); // Litt lenger ut
+    camera.position.set(0, 0, 12); 
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -130,11 +122,10 @@ function setupThreeJS() {
 }
 
 function createGlobe() {
-    // Klode til venstre
     const geo = new THREE.IcosahedronGeometry(2.5, 12); 
     const mat = new THREE.MeshStandardMaterial({ color: 0xff3300, roughness: 0.7 });
     globe = new THREE.Mesh(geo, mat);
-    globe.position.set(-5, 0, -2); // Flyttet litt lenger til venstre
+    globe.position.set(-5, 0, -2);
     scene.add(globe);
     createVolcanoes();
 }
@@ -160,15 +151,13 @@ function createVolcanoes() {
 
 function createTimeLine() {
     timeLineGroup = new THREE.Group();
-    timeLineGroup.position.set(3, -2, 0); // Høyre side
+    timeLineGroup.position.set(3, -2, 0);
     scene.add(timeLineGroup);
 
-    // Lang linje
     const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,10), new THREE.Vector3(0,0,-2000)]);
     const lineMat = new THREE.LineBasicMaterial({ color: 0x00ff41, transparent: true, opacity: 0.5 });
     timeLineGroup.add(new THREE.Line(lineGeo, lineMat));
 
-    // Markører
     for (let y = 4600; y >= 0; y -= 100) {
         const sprite = createTextSprite(y + " Ma");
         sprite.userData = { year: y };
@@ -194,55 +183,68 @@ function createTextSprite(msg) {
 
 function createStars() {
     const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(1500 * 3); // Flere stjerner
+    const pos = new Float32Array(4500); 
     for(let i=0; i<4500; i++) pos[i] = (Math.random() - 0.5) * 500;
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     starSystem = new THREE.Points(geo, new THREE.PointsMaterial({color: 0xffffff, size: 0.3}));
     scene.add(starSystem);
 }
 
-// --- SIMULERING & PAUSE LOGIKK ---
+// --- SIMULERING & LOGIKK ---
 
 function updateSimulation(dt) {
     if (currentYear <= 0) {
         isPlaying = false;
         ui.warpBtn.innerText = "FREMTIDEN ER NÅ";
+        ui.year.innerText = "0 Ma";
+        ui.countdown.innerText = "ANKOMST";
         return;
     }
 
-    // Flytt tid
-    const yearDrop = speed * dt;
-    currentYear -= yearDrop;
+    // --- MATEMATIKK FIX ---
+    // speed er i "År per sekund". dt er i sekunder.
+    // yearsTraveled = speed * dt
+    // Vi må konvertere dette til "Millioner år" (Ma) fordi currentYear er i Ma.
+    // 1 Ma = 1,000,000 år.
+    
+    const yearsTraveled = speed * dt;
+    const maTraveled = yearsTraveled / 1000000;
+    
+    currentYear -= maTraveled;
     if (currentYear < 0) currentYear = 0;
 
-    // UI Oppdatering
-    ui.year.innerText = Math.floor(currentYear) + " Ma";
-    const secondsLeft = currentYear / speed;
+    // --- DISPLAY FORMATERING ---
+    // Hvis farten er lav, vis desimaler så brukeren ser at det skjer noe
+    if (speed < 10000) {
+        ui.year.innerText = currentYear.toFixed(6) + " Ma";
+    } else if (speed < 1000000) {
+        ui.year.innerText = currentYear.toFixed(3) + " Ma";
+    } else {
+        ui.year.innerText = Math.floor(currentYear) + " Ma";
+    }
+    
+    // --- NEDTELLING FIX ---
+    // Totalt antall år igjen = currentYear (i Ma) * 1,000,000
+    const totalYearsLeft = currentYear * 1000000;
+    const secondsLeft = totalYearsLeft / speed;
     ui.countdown.innerText = formatTime(secondsLeft);
 
-    // Sjekk Hendelser
+    // --- HENDELSER ---
     const data = getMilestoneData(currentYear);
     ui.nextEvent.innerText = "NÅ: " + data.title;
 
-    // HVIS NY EPOKE:
     if (currentEraTitle !== data.title) {
         currentEraTitle = data.title;
         
-        // 1. Sett på pause
         isPlaying = false;
         isPausedForEvent = true;
         ui.warpBtn.innerText = "HENDELSE...";
 
-        // 2. Oppdater Tekst i bunnen
         updateInfoText(data);
-
-        // 3. Oppdater Klode Farge (mens vi venter)
         updateGlobeColor(data.color, currentYear);
 
-        // 4. Vis Pop-up og start timer for fortsettelse
         triggerPopup(data.title, `images/${data.img}`, () => {
-            // Callback når bildet er ferdig vist (5 sekunder)
-            if (isPausedForEvent) { // Sjekk om brukeren ikke har stoppet manuelt
+            if (isPausedForEvent) {
                 isPlaying = true;
                 isPausedForEvent = false;
                 ui.warpBtn.innerText = "PAUSE REISEN ||";
@@ -250,12 +252,12 @@ function updateSimulation(dt) {
         });
     }
 
-    // Tidslinje animasjon
+    // Animasjon av tidslinje
     const zScale = 0.5;
     markers.forEach(m => {
         const z = (m.userData.year - currentYear) * -zScale;
         m.position.set(0.5, 0.5, z - 10);
-        m.visible = (z < 10 && z > -500); // Optimalisering
+        m.visible = (z < 10 && z > -500); 
     });
 
     updateVolcanoes(currentYear);
@@ -264,20 +266,17 @@ function updateSimulation(dt) {
 function triggerPopup(title, src, onComplete) {
     if (!ui.popup) return;
 
-    // Bytt bilde mens opacity er 0 for å unngå glitch
     ui.popup.classList.remove('active');
     
-    // Vent litt før vi bytter src og viser (sikrer at CSS transition rekker å skjule den gamle)
     setTimeout(() => {
         ui.popupImg.src = src;
         ui.popupText.innerText = title;
         ui.popup.classList.add('active');
 
-        // Vent 5 sekunder, så skjul og gjenoppta
         setTimeout(() => {
             ui.popup.classList.remove('active');
             if (onComplete) onComplete();
-        }, 5000); // 5 sekunder visningstid
+        }, 5000); 
     }, 200);
 }
 
@@ -304,6 +303,11 @@ function updateVolcanoes(year) {
 function formatTime(s) {
     if (s === Infinity) return "--";
     if (s <= 0) return "ANKOMST";
+    
+    // Hvis det er ekstremt mange år (lav fart)
+    const years = Math.floor(s / (86400 * 365));
+    if (years > 0) return `> ${years} år`;
+
     const d = Math.floor(s/86400); s %= 86400;
     const h = Math.floor(s/3600); s %= 3600;
     const m = Math.floor(s/60);
@@ -316,10 +320,9 @@ function getMilestoneData(y) {
 }
 
 function toggleWarp() {
-    // Hvis vi er i event-pause, tving fortsettelse
     if (isPausedForEvent) {
         isPausedForEvent = false;
-        ui.popup.classList.remove('active'); // Fjern bildet med en gang
+        ui.popup.classList.remove('active');
     }
     
     isPlaying = !isPlaying;
@@ -334,12 +337,11 @@ function animate() {
     if (isPlaying) {
         updateSimulation(dt);
         
-        // Roter kloden og flytt stjerner
         globe.rotation.y += 0.005;
         const pos = starSystem.geometry.attributes.position.array;
         for(let i=2; i<pos.length; i+=3) {
-            // Visuell fart: Log(speed) for å unngå at stjernene blir streker
-            let visualSpeed = Math.log(speed) * 10; 
+            // Visuell stjerne-fart (clampet så det ikke blir kaos)
+            let visualSpeed = Math.min(Math.log(speed) * 8, 200); 
             pos[i] += visualSpeed * dt; 
             if (pos[i] > 50) pos[i] = -400;
         }
@@ -351,4 +353,4 @@ function animate() {
 
 window.onload = init;
 
-/* Version: #10 */
+/* Version: #11 */
