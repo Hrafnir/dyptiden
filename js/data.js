@@ -1,100 +1,139 @@
-/* Version: #7 */
+/* Version: #15 */
 /* 
     DATA KONFIGURASJON FOR DYPTIDS-REISEN
     -------------------------------------
-    Oppdatert for .png bilder og "Dyptidspedagogikk".
+    Fokus: Livets utvikling (Biologi & Zoologi)
+    Målgruppe: Ungdomsskole
 */
 
 const MILESTONES = [
     { 
-        start: 4600, 
-        end: 4000, 
-        title: "Hadeikum: Smeltedigelen", 
+        start: 4600, end: 4000, 
+        title: "Hadeikum: Det store smellet", 
         color: 0xff3300, 
-        desc: "Jorden dannes av kosmisk støv og stein. 4,53 Ga kolliderer planeten Theia med Jorden; restene danner Månen. En glødende magma-klode kjøles sakte ned, og de første havene kondenserer fra en tykk, trykkende atmosfære.", 
-        img: "hadean_magma.png" 
+        desc: "Jorden er nyfødt og dekket av lava. En kollisjon skaper Månen. Ingen liv kan overleve her ennå.", 
+        img: "01_hadean.png" 
     },
     { 
-        start: 4000, 
-        end: 3600, 
+        start: 4000, end: 3600, 
         title: "Eoarkeikum: Vannverdenen", 
         color: 0x0066cc, 
-        desc: "En global vannverden med kun små vulkanske øyer. Livet oppstår (Abiogenese) i hydrotermiske skorsteiner. Atmosfæren er oksygenfri og oransje av metan. De eldste bergartene (Acasta Gneiss) bevares.", 
-        img: "eoarchean_water.png" 
+        desc: "Jorden kjøles ned og blir et globalt hav. Dypt nede i varme kilder oppstår det aller første, enkle livet (bakterier).", 
+        img: "02_waterworld.png" 
     },
     { 
-        start: 3600, 
-        end: 3200, 
+        start: 3600, end: 3000, 
         title: "Paleoarkeikum: Stromatolitter", 
         color: 0x0088aa, 
-        desc: "De første makrofossilene: Stromatolitter bygger rev i grunt vann. Anoksygenisk fotosyntese oppstår – bakterier utnytter sollys men lager svovel, ikke oksygen. Mulig dannelse av ur-kontinentet Vaalbara.", 
-        img: "paleoarchean_stromatolites.png" 
+        desc: "Bakterier bygger store tuer (stromatolitter) i strandkanten. De er planetens første 'arkitekter'.", 
+        img: "03_stromatolites.png" 
     },
     { 
-        start: 3200, 
-        end: 2800, 
-        title: "Mesoarkeikum: Is-Paradokset", 
-        color: 0x009999, 
-        desc: "Kontinentalsoklene vokser og gir livsrom. Cyanobakterier utvikler evnen til å splitte vann og lage Oksygen ($O_2$). Pongola-istiden (2,9 Ga) viser at klimaet svinger selv i en drivhusverden.", 
-        img: "mesoarchean_ice.png" 
-    },
-    { 
-        start: 2800, 
-        end: 2400, 
-        title: "Neoarkeikum: Oksygenkatastrofen", 
+        start: 3000, end: 2300, 
+        title: "Neoarkeikum: Oksygen-krisen", 
         color: 0x55aa55, 
-        desc: "Havet 'ruster': Oksygen reagerer med jern og danner Båndet Jernmalm (BIF). Dette leder til The Great Oxidation Event (GOE). Oksygenet er giftig for det meste av liv, men åpner for effektiv aerob energi.", 
-        img: "goe_red_ocean.png" 
+        desc: "Cyanobakterier lærer fotosyntese! De lager oksygen, som får havet til å ruste (bli rødt) og dreper nesten alt annet liv.", 
+        img: "04_goe.png" 
     },
     { 
-        start: 2400, 
-        end: 2000, 
+        start: 2300, end: 1600, 
         title: "Paleoproterozoikum: Snøballjord", 
         color: 0xffffff, 
-        desc: "Huronian-istiden gjør jorden til en hvit 'Snøball' etter at metan forsvinner. Vredefort-asteroiden treffer. Det største biologiske spranget skjer: Endosymbiose skaper den Eukaryote cellen (med kjerne).", 
-        img: "snowball_earth.png" 
+        desc: "Uten drivhusgasser fryser hele jorden til is. Livet klamrer seg fast nær vulkaner under isen.", 
+        img: "05_snowball.png" 
     },
     { 
-        start: 2000, 
-        end: 1600, 
-        title: "Mesoproterozoikum I: Columbia", 
-        color: 0xccaa00, 
-        desc: "Superkontinentet Columbia dannes. 'Den kjedelige milliarden' preges av stabilitet. Havene er lagdelte (Canfield Ocean) med giftig svovel i dypet, noe som bremser utviklingen av avansert liv.", 
-        img: "columbia_supercontinent.png" 
-    },
-    { 
-        start: 1600, 
-        end: 1200, 
-        title: "Mesoproterozoikum II: Flercellethet", 
+        start: 1600, end: 800, 
+        title: "Mesoproterozoikum: Første flercellet liv", 
         color: 0xaabb00, 
-        desc: "Rødalgen Bangiomorpha (1,2 Ga) er det første beviset på spesialisert flercellet liv. Kloroplaster oppstår ved at en celle 'spiser' en cyanobakterie uten å fordøye den – planteriket fødes.", 
-        img: "bangiomorpha_algae.png" 
+        desc: "Rødalgen Bangiomorpha er det første livet vi ser som består av flere celler som samarbeider. Kjønnet formering oppstår!", 
+        img: "06_bangiomorpha.png" 
     },
     { 
-        start: 1200, 
-        end: 800,  
-        title: "Neoproterozoikum I: Rodinia & Kjønn", 
-        color: 0x996633, 
-        desc: "Superkontinentet Rodinia samles. Oppfinnelsen av seksuell reproduksjon (kjønn) akselererer evolusjonen drastisk ved å stokke genene. Et evolusjonært våpenkappløp (pigger og panser) begynner.", 
-        img: "rodinia_sex.png" 
+        start: 800, end: 541, 
+        title: "Ediacara: De myke dyrene", 
+        color: 0xffaa00, 
+        desc: "Før skall og tenner fantes Ediacara-faunaen. Rare, flate skapninger som Dickinsonia som lå på havbunnen som levende matter.", 
+        img: "07_ediacaran.png" 
     },
     { 
-        start: 800,  
-        end: 400,  
-        title: "Neoproterozoikum II: Eksplosjon", 
+        start: 541, end: 485, 
+        title: "Kambrium: Rovdyrene kommer", 
         color: 0x00dddd, 
-        desc: "Etter en ny Snøball-jord (Cryogenium) kommer Ediacara-faunaen (bløte dyr). Så smeller det: Den Kambriske Eksplosjon (541 Ma). Dyr får øyne, tenner og skall. Livet krabber opp på land i Silur.", 
-        img: "cambrian_explosion.png" 
+        desc: "Livets 'Big Bang'. Dyr utvikler øyne, skall og tenner. Kjempe-reken Anomalocaris er verdens første super-rovdyr.", 
+        img: "08_cambrian.png" 
     },
     { 
-        start: 400,  
-        end: 0,    
-        title: "Fanerozoikum: Land & Liv", 
+        start: 485, end: 443, 
+        title: "Ordovicium: Blekksprutenes tid", 
+        color: 0x0099cc, 
+        desc: "Havet domineres av Orthoceras, blekkspruter med lange, kjegleformede skall. De første fiskene (uten kjeve) svømmer rundt.", 
+        img: "09_ordovician.png" 
+    },
+    { 
+        start: 443, end: 419, 
+        title: "Silur: Sjøskorpioner", 
+        color: 0xaaeeaa, 
+        desc: "Skorpioner på størrelse med mennesker (Pterygotus) jakter i havet. På land begynner små, grønne planter å vokse.", 
+        img: "10_silurian.png" 
+    },
+    { 
+        start: 419, end: 359, 
+        title: "Devon: Fisken går på land", 
         color: 0x228822, 
-        desc: "Karbonskogene, Pangea, Dinosaurenes tidsalder og til slutt Pattedyr. Mennesket (Homo Sapiens) dukker opp helt i siste sekund av denne 4,6 milliarder år lange reisen.", 
-        img: "phanerozoic_land.png" 
+        desc: "Tiktaalik er 'missing link' mellom fisk og landdyr. Den bruker finnene sine til å krabbe opp på gjørmete elvebredder.", 
+        img: "11_devonian.png" 
+    },
+    { 
+        start: 359, end: 299, 
+        title: "Karbon: Kjempeinsekter", 
+        color: 0x004400, 
+        desc: "Luften har så mye oksygen at insekter blir gigantiske. Øyenstikkeren Meganeura har et vingespenn på 70 cm!", 
+        img: "12_carboniferous.png" 
+    },
+    { 
+        start: 299, end: 252, 
+        title: "Perm: Panserdyrene", 
+        color: 0xcc8800, 
+        desc: "Før dinosaurene regjerte pattedyrlignende krypdyr som Dimetrodon (med seil på ryggen). Jorda er tørr og varm.", 
+        img: "13_permian.png" 
+    },
+    { 
+        start: 252, end: 145, 
+        title: "Jura: Gigantene", 
+        color: 0x66cc66, 
+        desc: "Dinosaurenes gullalder. Langhalser som Brachiosaurus spiser fra tretoppene. Fugler begynner å utvikle seg.", 
+        img: "14_jurassic.png" 
+    },
+    { 
+        start: 145, end: 66, 
+        title: "Kritt: T-Rex sin tid", 
+        color: 0x44aa44, 
+        desc: "Tyrannosaurus Rex er kongen på haugen. Men i himmelen nærmer en asteroide seg som vil endre alt...", 
+        img: "15_cretaceous.png" 
+    },
+    { 
+        start: 66, end: 23, 
+        title: "Paleogen: Hvalenes retur", 
+        color: 0xddddaa, 
+        desc: "Pattedyrene tar over verden. Noen går tilbake i havet og blir til hvaler, som rovdyret Basilosaurus.", 
+        img: "16_paleogene.png" 
+    },
+    { 
+        start: 23, end: 2, 
+        title: "Neogen: Våre forfedre", 
+        color: 0xeebb00, 
+        desc: "På Afrikas savanner begynner aper å gå på to bein. Australopithecus ('Lucy') er en av våre tidligste slektninger.", 
+        img: "17_neogene.png" 
+    },
+    { 
+        start: 2, end: 0, 
+        title: "Antropocen: Mennesket", 
+        color: 0x0000ff, 
+        desc: "Homo Sapiens sprer seg over hele kloden. Vi bygger byer, teknologi og former planeten mer enn noen art før oss.", 
+        img: "18_anthropocene.png" 
     }
 ];
 
-console.log("System: Dyptidspedagogikk-data lastet (PNG Modus). Antall faser:", MILESTONES.length);
-/* Version: #7 */
+console.log("System: Biologi-data lastet. Antall milepæler:", MILESTONES.length);
+/* Version: #15 */
