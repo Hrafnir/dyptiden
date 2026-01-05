@@ -1,47 +1,43 @@
-<!-- Version: #3 -->
+<!-- Version: #4 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dyptids-Reisen: Warp Speed</title>
+    <title>Dyptids-Reisen: Hyper-Realism</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- BAKGRUNN: 3D VERDEN -->
     <div id="scene-container"></div>
 
-    <!-- FORGRUNN: HUD -->
     <div id="hud-layer">
-        
-        <!-- TOPP: Info -->
         <div id="hud-top-bar">
             <div class="hud-box">
                 <div class="label">NÅVÆRENDE ÅR</div>
                 <div id="year-display" class="big-digit">4600 Ma</div>
             </div>
             
-            <!-- Midten: Neste hendelse (mindre fokus nå som vi har info nede) -->
             <div class="hud-box center-box">
                 <div class="label">NESTE HENDELSE</div>
                 <div id="next-event-display" class="info-text">Hadeikum</div>
             </div>
 
-            <!-- Høyre: Nedtelling og Kontroller -->
             <div id="hud-right-column">
                 <div class="hud-box">
                     <div class="label">ANKOMST NÅTID</div>
                     <div id="countdown-display" class="digital-text">-- d -- t -- m</div>
                 </div>
 
-                <!-- KONTROLLPANEL (Flyttet hit) -->
                 <div class="control-panel">
                     <div class="slider-row">
                         <label>HASTIGHET: <span id="speed-value">100 år</span> /sek</label>
-                        <!-- Slider med 8 trinn (0 til 7) som mappes til logaritmisk skala i JS -->
                         <input type="range" id="speed-slider" min="0" max="7" value="3" step="1">
                     </div>
                     <button id="warp-btn" class="retro-btn">START REISEN ▶</button>
@@ -49,18 +45,19 @@
             </div>
         </div>
 
-        <!-- BUNN: Info om epoken -->
         <div id="hud-bottom-bar">
             <div id="info-overlay">
                 <h1 id="info-title">HADEIKUM</h1>
-                <p id="info-desc">Jorden dannes. En glødende magma-klode.</p>
+                <p id="info-desc">Jorden dannes.</p>
             </div>
         </div>
-
     </div>
 
+    <!-- Scripts -->
     <script src="js/data.js"></script>
+    <!-- NY FIL FOR GRAFIKK -->
+    <script src="js/planet.js"></script> 
     <script src="js/main.js"></script>
 </body>
 </html>
-<!-- Version: #3 -->
+<!-- Version: #4 -->
