@@ -1,90 +1,71 @@
-<!-- Version: #1 -->
+<!-- Version: #2 -->
 <!DOCTYPE html>
 <html lang="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dyptids-Reisen: Jordas Historie</title>
+    <title>Dyptids-Reisen: Warp Speed</title>
     
     <!-- Kobler til stilarket -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- Laster inn Three.js fra CDN -->
+    <!-- Laster inn Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Font for digital klokke-look -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="app-container">
-        <!-- VENSTRE SIDE: 3D KLODE -->
-        <section id="globe-container">
-            <!-- Three.js canvas vil bli lagt til her av main.js -->
-            <div id="globe-overlay">
-                <span class="retro-label">VISUALISERING: PLANETÆR STATUS</span>
-            </div>
-        </section>
+    <!-- BAKGRUNN: 3D VERDEN -->
+    <!-- Dekker nå hele skjermen -->
+    <div id="scene-container"></div>
 
-        <!-- HØYRE SIDE: DASHBOARD -->
-        <section id="ui-panel">
-            
-            <!-- Header / Tittel -->
-            <header>
-                <h1>DYPTIDS-REISEN</h1>
-                <div class="system-status">SYSTEM STATUS: ONLINE</div>
-            </header>
-
-            <!-- Tidskontroll -->
-            <div class="control-group">
-                <div class="label-row">
-                    <span class="label">TIDSSKALA (Millioner år siden)</span>
-                    <span id="year-display" class="digital-value">4600 Ma</span>
-                </div>
-                <!-- Slider går fra 0 (Nåtid) til 4600 (Fortid). Vi reverserer logikken i JS. -->
-                <input type="range" id="time-slider" min="0" max="4600" value="4600" step="1">
-                
-                <div class="button-row">
-                    <button id="autoplay-btn" class="retro-btn">START SIMULERING [AUTOPLAY]</button>
-                </div>
+    <!-- FORGRUNN: HUD (HEADS-UP DISPLAY) -->
+    <div id="hud-layer">
+        
+        <!-- Topp: Status -->
+        <div id="hud-top">
+            <div class="hud-box left">
+                <div class="label">NÅVÆRENDE ÅR</div>
+                <div id="year-display" class="big-digit">4600 Ma</div>
             </div>
 
-            <!-- Grafer for Atmosfære -->
-            <div class="charts-container">
-                <div class="chart-box">
-                    <span class="label">ATMOSFÆRE: OKSYGEN ($O_2$)</span>
-                    <canvas id="o2-chart" width="300" height="100"></canvas>
-                    <div id="o2-value" class="digital-value-small">0%</div>
-                </div>
-                <div class="chart-box">
-                    <span class="label">ATMOSFÆRE: KARBONDIOKSID ($CO_2$)</span>
-                    <canvas id="co2-chart" width="300" height="100"></canvas>
-                    <div id="co2-value" class="digital-value-small">HØYT</div>
-                </div>
+            <div class="hud-box center">
+                <div class="label">NESTE HENDELSE</div>
+                <div id="next-event-display" class="info-text">Hadeikum: Start</div>
             </div>
 
-            <!-- Milepæl Informasjon -->
-            <div id="milestone-panel">
-                <div class="panel-header">
-                    <span id="era-title" class="glitch-text">HADEIKUM</span>
-                </div>
-                
-                <div class="content-grid">
-                    <div id="image-container">
-                        <!-- Plassholder for bilde, byttes ut dynamisk -->
-                        <div id="placeholder-visual">
-                            [DATA MANGLER: LASTER VISUELL PROJEKSJON...]
-                        </div>
-                    </div>
-                    <div class="text-content">
-                        <p id="era-description">Initialiserer sekvens... Venter på input.</p>
-                    </div>
-                </div>
+            <div class="hud-box right">
+                <div class="label">TID TIL NÅTID (ANKOMST)</div>
+                <div id="countdown-display" class="digital-text">-- d -- t -- m -- s</div>
             </div>
+        </div>
 
-        </section>
+        <!-- Bunn: Kontroller -->
+        <div id="hud-bottom">
+            <div class="control-panel">
+                <div class="slider-row">
+                    <label for="speed-slider">REISEHASTIGHET: <span id="speed-value">100</span> Ma/s</label>
+                    <input type="range" id="speed-slider" min="10" max="1000" value="100" step="10">
+                </div>
+                <button id="warp-btn" class="retro-btn">START REISEN ▶</button>
+            </div>
+        </div>
+
+        <!-- Info Panel (Dukker opp ved hendelser) -->
+        <!-- Bildet injiseres av JS via popup-funksjonen vi lagde sist, 
+             men vi legger til en fast plass for tekst-info her hvis bildet ikke dekker alt -->
+        <div id="info-overlay" class="hidden">
+            <h2 id="info-title">TITTEL</h2>
+            <p id="info-desc">Beskrivelse</p>
+        </div>
+
     </div>
 
-    <!-- Scripts lastes på slutten -->
+    <!-- Scripts -->
     <script src="js/data.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
-<!-- Version: #1 -->
+<!-- Version: #2 -->
