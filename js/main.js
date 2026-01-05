@@ -1,4 +1,4 @@
-/* Version: #4 */
+/* Version: #6 */
 /* === MAIN ENGINE: DYPTIDS-REISEN === */
 
 // Sjekk at data er lastet
@@ -105,7 +105,6 @@ function createStars() {
 
 function getMilestoneData(year) {
     // Finn perioden som "year" faller innenfor
-    // Vi bruker .find() fordi vi har sortert dataene, men en enkel loop er sikrere
     for (let m of MILESTONES) {
         if (year <= m.start && year >= m.end) {
             return m;
@@ -176,13 +175,14 @@ function updateVisualization(year) {
         uiElements.eraTitle.innerText = data.title;
         uiElements.eraDesc.innerText = data.desc;
         
-        // Oppdater bilde-plassholder tekst
+        // --- ENDRING HER: Viser nå bildet ---
+        // Vi sjekker om bildefilen eksisterer i data.js
+        const imagePath = `images/${data.img}`;
+        
         uiElements.placeholder.innerHTML = `
-            <div style="text-align:center;">
-                <strong>VISUELL DATABASE:</strong><br>
-                ${data.img}<br><br>
-                <span style="font-size:0.7em; color:#005511;">[RENDERING...]</span>
-            </div>
+            <img src="${imagePath}" 
+                 alt="${data.title}" 
+                 style="width:100%; height:100%; object-fit:cover; border: 1px solid #00ff41; display:block;">
         `;
     }
 
@@ -277,9 +277,6 @@ function drawChart(canvas, type, currentYear) {
 
 function handleSliderInput(e) {
     currentYear = parseInt(e.target.value);
-    
-    // Hvis brukeren drar i slideren mens autoplay kjører, bør vi kanskje pause?
-    // For nå lar vi den kjøre, men oppdaterer året manuelt.
     updateVisualization(currentYear);
 }
 
@@ -345,4 +342,4 @@ function animate() {
 // Start applikasjonen når vinduet er lastet
 window.onload = init;
 
-/* Version: #4 */
+/* Version: #6 */
